@@ -1,0 +1,442 @@
+---
+title: "GluN2B GOF mutant rescue in double KO (*grin2a* and *grin2b*): NMDA-EPSC decay"
+output:
+  html_document: default
+  pdf_document: default
+---
+  
+  
+**This document forms part of the data and code deposited at:**  
+https://github.com/acp29/Elmasri_GRIN2B
+  
+  
+**Load package requirements**  
+```{r, echo=TRUE, message=FALSE, results='hide'}
+if (!require(package="tidyverse")) utils::install.packages("tidyverse")
+library(tidyverse) 
+if (!require(package="lme4")) utils::install.packages("lme4")
+library(lme4)  
+if (!require(package="HLMdiag")) utils::install.packages("HLMdiag")
+library(HLMdiag)
+if (!require(package="parameters")) utils::install.packages("parameters")
+library(parameters) 
+if (!require(package="car")) utils::install.packages("car")
+library(car)  
+if (!require(package="performance")) utils::install.packages("performance")
+library(performance) 
+if (!require(package="BayesFactor")) utils::install.packages("BayesFactor")
+library(BayesFactor) 
+if (!require(package="bayestestR")) utils::install.packages("bayestestR")
+library(bayestestR) 
+if (!require(package="stats")) utils::install.packages("stats")
+library(stats)
+if (!require(package="pCalibrate")) utils::install.packages("pCalibrate")
+library(pCalibrate)
+if (!require(package="afex")) utils::install.packages("afex")
+library(afex)
+if (!require(package="emmeans")) utils::install.packages("emmeans")
+library(emmeans)
+if (!require(package="multcomp")) utils::install.packages("multcomp")
+library(multcomp)
+if (!require(package="knitr")) utils::install.packages("knitr")
+library(knitr)
+if (!require(package="kableExtra")) utils::install.packages("kableExtra")
+library(kableExtra)
+if (!require(package="ggplot2")) utils::install.packages("ggplot2")
+library(ggplot2)
+if (!require(package="qqplotr")) utils::install.packages("qqplotr")
+library(qqplotr)
+if (!require(package="gridExtra")) utils::install.packages("gridExtra")
+library(gridExtra)
+if (!require(package="ggforce")) utils::install.packages("ggforce")
+library(ggforce)
+if (!require(package="devEMF")) utils::install.packages("devEMF")
+library(devEMF)
+if (!require(package="effectsize")) utils::install.packages("effectsize")
+library(effectsize)
+```
+
+**Read text in from file**
+```{r}
+allData <- read.delim("../data/n2b_dko_mutant_nmdar.dat", header = TRUE)
+# Implicit nesting (required for anovaBF)
+allData %>% 
+  na.omit() %>%
+  filter(mutation!="C456Y") %>%
+  mutate(mutation = as.factor(mutation)) %>% 
+  mutate(animal = paste0(as.numeric(mutation),animal)) %>% 
+  mutate(slice = paste0(animal,slice)) %>% 
+  mutate(pair = paste0(slice,pair)) %>% 
+  mutate(pair = factor(pair)) -> Data
+```
+
+**Factor encoding**
+```{r}  
+Data$mutation <- as.factor(Data$mutation)
+Data$transfection <- as.factor(Data$transfection)
+Data$animal <- as.factor(Data$animal)
+#Data$hemi <- as.factor(Data$hemi)
+Data$slice <- as.factor(Data$slice)
+Data$pair <- as.factor(Data$pair)
+```
+
+**Set mutation WT and transfection - as reference levels**
+```{r}
+Data$mutation <- factor(Data$mutation, levels=c("WT_2B","R540H","R696H"))
+Data$transfection <- factor(Data$transfection, levels=c("-","+"))
+```
+
+**lmer settings**
+```{r}
+settings <- lmerControl(check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4), boundary.tol=0)
+```
+
+
+**Fit a mixed linear model**
+```{r, results='asis'}  
+
+# Initialize
+variates <- c("decay","dt50","fwhm")
+l <- length(variates)
+
+for (i in 1:l) {
+  
+variates[i] -> resp  
+
+cat('\n\n\n# Analysis of',resp,'\n\n')
+
+# Plot data
+# colours selected from:
+#  > library(scales)
+#  > show_col(hue_pal()(9))
+p1 <- Data %>%
+    mutate(mutation_jittered = jitter((as.numeric(mutation)+(as.numeric(transfection)-1)/2.5), 0.5),
+           grouping=interaction(pair, mutation)) %>%
+    mutate(mutation_transfection = as.numeric(mutation)+(as.numeric(transfection)-1)/2.5) %>%
+    ggplot(aes(x=mutation, y=!!sym(resp), group=grouping, color=transfection)) + 
+    geom_blank() +
+    geom_line(aes(mutation_jittered), alpha=0.33, color="grey") +
+    geom_point(aes(mutation_jittered), alpha=0.9, shape = 16) +
+    scale_color_manual(values=c("grey","#00BA38")) +
+    stat_summary(mapping = aes(x=mutation_transfection,y=!!sym(resp)), fun.data="median_hilow", fun.args = list(conf.int=0.5), geom="linerange", color="black", size=1.0,inherit.aes=FALSE) + 
+    stat_summary(mapping = aes(x=mutation_transfection,y=!!sym(resp)), fun="median", geom="point", shape=21, fill="white", color="black", size=2.5, stroke=1, inherit.aes=FALSE) +
+    ylab(resp) +
+    ggtitle("a") +
+    theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1),axis.line = element_line(colour="black"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          legend.title = element_blank(),
+          legend.position = "top")
+p2 <- Data %>% 
+    pivot_wider(c(mutation,pair,!!sym(resp)),names_from=transfection,values_from=!!sym(resp)) %>% 
+    mutate(ratio = `+`/`-`) %>%
+    ggplot(aes(x=mutation, y=ratio, colour=mutation)) +
+    geom_sina(alpha=0.9, shape = 16) + 
+    scale_color_manual(values=c("grey","#DB72FB","#FF61C3")) +
+    stat_summary(fun.data="median_hilow", fun.args = list(conf.int=0.5), geom="linerange", color="black", size=1.0) + 
+    stat_summary(fun="median", geom="point", shape=21, fill="white", color="black", size=2.5, stroke=1) +
+    ylab("ratio") +
+    ggtitle("b") +
+    theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1),axis.line = element_line(colour="black"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          legend.position = "none")
+grid.arrange(p1, p2, nrow = 1, ncol = 2, top=sprintf("Summary plots of the data for: %s\n",resp))
+
+# Fit the model with planned contrasts and perform hypothesis testing
+  
+# Setup planned, orthogonal contrasts
+# ("WT_2B","R540H","R696H","C456Y")
+WT_vs_GOF <- c(-2,1,1)/3
+GOF       <- c(0,-1,1)/2
+contr.orth <- cbind(WT_vs_GOF, GOF)
+rownames(contr.orth) <- levels(Data$mutation)
+
+# Check that contrasts are indeed orthogonal
+contr.orth %>%
+  cor() %>%
+  knitr::kable(caption = sprintf("**All off-diagonal elements in correlation matrix of orthogonal contrasts should be zero: %s**",resp), digits = 2) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print()
+contr.orth %>%
+  colSums() %>%
+  as.data.frame() %>%
+  rename(.,'sum' = '.') %>%
+  knitr::kable(caption = sprintf("**Sum of each orthogonal contrast should be zero: %s**",resp), digits = 2) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print()
+
+# Fit model (with orthogonal contrasts)
+contrasts(Data$mutation) <- contr.orth 
+attr(Data$mutation,"contrasts") %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "mutation") %>% 
+  knitr::kable(caption = sprintf("**Matrix of contrasts on mutation: %s**",resp), digits = 2) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print()
+contrasts(Data$transfection) <- rbind(-1,1)/2
+attr(Data$transfection,"contrasts") %>% 
+  as.data.frame() %>%
+  rename(contrast = "V1") %>%
+  rownames_to_column(var = "transfection") %>% 
+  mutate_at("transfection", str_replace_all, pattern = "\\+", replacement = "\\\\+")  %>% 
+  mutate_at("transfection", str_replace_all, pattern = "\\-", replacement = "\\\\-")  %>% 
+  knitr::kable(caption = sprintf("**Matrix of contrasts on transfection: %s**",resp), digits = 2) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print() 
+formula <- sprintf("log(%s) ~ mutation * transfection + (1|animal/slice/pair)", resp)
+model <- lmer(formula, data = Data, REML = TRUE, control = settings, na.action = "na.fail") 
+
+# Checking model assumptions
+resid = residuals(model)
+n = length(resid)
+stdev = sqrt((n-1)/n) * sd(resid) # standard deviation with denominator n
+std_resid = resid/stdev
+p1 <- ggplot(Data, aes(x = fitted(model), y = std_resid)) +
+  geom_point() +
+  ggtitle("a") +
+  xlab("Fitted values") + ylab("Standardized Residuals") +
+  geom_hline(yintercept = 0) +
+  geom_quantile(formula=y~x, color="#619CFF", size=1) +
+  geom_smooth(method="loess", formula = y ~ x, color="#F8766D", size=1, se=FALSE)
+p2 <- ggplot(Data, aes(x = std_resid)) +
+  geom_histogram(aes(y=..density..), binwidth = 0.9*n^(-1/5), fill="#619CFF", alpha=0.33)  +
+  geom_density(kernel="gaussian", alpha=0, color="#619CFF", size=1) +
+  ggtitle("b") +
+  xlab("Standardized Residuals") + ylab("Density") +
+  geom_vline(xintercept = 0) +
+  geom_function(fun = dnorm, args = list(mean=0, sd=1), col = "#F8766D", size = 1)
+p3 <- ggplot(Data, aes(sample = std_resid)) +
+  geom_qq_band(distribution = "norm", bandType = "ts", mapping = aes(fill = "TS"), fill="#619CFF", alpha = 0.33) +
+  stat_qq() + 
+  stat_qq_line(color="#F8766D",size=1) +
+  ggtitle("c") +
+  xlab("Normal Quantiles") + ylab("Sample Quantiles") 
+infl <- hlm_influence(model, level="pair:(slice:animal)")
+p4 <- infl %>% 
+  mutate(influential = cooksd > 1.0) %>% 
+  ggplot(aes(x=`pair:(slice:animal)`,y=cooksd, color=influential)) + 
+  geom_segment(aes(x=`pair:(slice:animal)`, xend=`pair:(slice:animal)`, y=0, yend=cooksd)) + 
+  geom_point() + 
+  scale_color_manual(values=c("#619CFF","#F8766D")) + 
+  ylab("Cook's distance") +
+  ggtitle("d") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.position = "none",
+        panel.background = element_rect(color="#EBEBEB"),
+        panel.grid = element_blank(),
+        panel.grid.minor.y = element_line(color = "white", size=0.25),
+        panel.grid.major.y = element_line(color = "white", size=0.5),
+        axis.line = element_blank(),
+        axis.line.x = element_line(size = 0.5, colour = "black"))
+grid.arrange(p1, p2, p3, p4, nrow=2, ncol=2, top=sprintf("Plots of standardized model residuals and Cook's distances: %s\n",resp))
+
+# Calculated estimated marginal means, By default, emmeans uses Kenward-Roger's method for estimating the degrees of freedom
+emm <- emmeans(model, ~ mutation * transfection, data = Data, tran = 'log', type = 'response')
+emm %>% 
+  summary(calc = c(n = ".wgt.")) %>%
+  as.data.frame() %>%
+  mutate_at("transfection", str_replace_all, pattern = "\\+", replacement = "\\\\+")  %>% 
+  mutate_at("transfection", str_replace_all, pattern = "\\-", replacement = "\\\\-")  %>% 
+  relocate(df, .before = response) %>%
+  dplyr::select(-SE) %>%
+  knitr::kable(caption = sprintf("**Estimated marginal means with 95%% confidence intervals: %s**",resp), digits = 2) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print()
+
+# Calculate overall average for untransfected neurons
+emmeans(model, ~ mutation * transfection, data = Data) %>%
+  as.data.frame() %>%
+  filter(transfection == "-") %>%
+  dplyr::select(emmean) %>% 
+  colMeans() %>%
+  exp() %>%
+  sprintf("**Overall average of %s for untransfected neurons**: %.2f",resp,.) %>%
+  print()
+
+# Calculate transfected/untransfected ratios
+emm.transfection <- contrast(emm, method = "trt.vs.ctrl", interaction = FALSE, by = 'mutation', adjust = "none")
+emm.transfection %>%
+  confint() %>%
+  as.data.frame() %>%
+  relocate(df, .before = ratio) %>%
+  dplyr::select(-SE) %>%
+  knitr::kable(caption = sprintf("**Estimated marginal means with 95%% confidence intervals for transfected/untransfected ratios: %s**",resp), digits = 2) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print()
+
+# Replot data with 95% confidence intervals
+emf(sprintf("../img/%s_%s.emf","n2b_dko_mutant_nmdar",resp), width=3.5, height=3.5)
+emm %>%
+    as.data.frame() %>%
+    mutate(mutation_transfection = as.numeric(mutation)+(as.numeric(transfection)-1)/2.5) -> emm_df
+p1 <- Data %>%
+    mutate(mutation_jittered = jitter((as.numeric(mutation)+(as.numeric(transfection)-1)/2.5), 0.5),
+           grouping=interaction(pair, mutation)) %>%
+    mutate(mutation_transfection = as.numeric(mutation)+(as.numeric(transfection)-1)/2.5) %>%
+    ggplot(aes(x=mutation, y=!!sym(resp), group=grouping, color=transfection)) + 
+    geom_blank() +
+    geom_line(aes(mutation_jittered), alpha=0.3, color="grey", size=0.75) +
+    geom_point(aes(mutation_jittered), alpha=0.6, shape = 16, size=1.25) +
+    scale_color_manual(values=c("grey","#00BA38")) +
+    scale_fill_manual(values=c("grey","#00BA38")) +
+    geom_crossbar(data = emm_df, 
+                    aes(x=mutation_transfection, y=response, ymin=`lower.CL`, ymax=`upper.CL`, fill=transfection), 
+                    color="black", alpha=0.5, size=0.5, fatten=1, width=0.3, inherit.aes=FALSE) + 
+    ylab(resp) +
+    theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1),axis.line = element_line(colour="black"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          legend.title = element_blank(),
+          legend.position = c(0.5, 1.06),
+          legend.direction = "horizontal",
+          text = element_text(size=14))
+emm.transfection %>%
+    confint() %>%
+    as.data.frame() -> emm.transfection_df
+p2 <- Data %>% 
+    pivot_wider(c(mutation,pair,!!sym(resp)),names_from=transfection,values_from=!!sym(resp)) %>% 
+    mutate(ratio = `+`/`-`) %>%
+    ggplot(aes(x=mutation, y=ratio, colour=mutation)) +
+    geom_sina(alpha=0.6, shape=16, size=1.25, maxwidth=0.5) + 
+    geom_crossbar(data = emm.transfection_df, 
+                           aes(x=mutation, y=ratio, ymin=`lower.CL`, ymax=`upper.CL`, fill=mutation), 
+                    color="black", alpha=0.5, size=0.5, fatten=1, width=0.8, inherit.aes=FALSE) +
+    scale_color_manual(values=c("grey","#DB72FB","#FF61C3")) +
+    scale_fill_manual(values=c("grey","#DB72FB","#FF61C3")) +
+    ylab("ratio") +
+    theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1), axis.line = element_line(colour="black"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          legend.position = "none",
+          text=element_text(size=14))
+grid.arrange(p1, p2, layout_matrix=rbind(c(1,2)), top=sprintf("Summary plots of the data with 95%% confidence intervals: %s\n",resp))
+dev.off() #turn off device and finalize file
+
+# Calculate ANOVA table for the fitted model (Type III sum of squares) 
+car::Anova(model, type = 3, test.statistic = "F") %>%       # Uses Kenward-Roger degrees of freedom
+  as.data.frame() %>%
+  rownames_to_column(var="Source") %>%
+  filter(Source != "(Intercept)") -> aov
+
+# Calculate Bayes Factors for ANOVA and append them to the ANOVA data frame
+# Inclusion Bayes Factor based on matched models (prior odds uniform-equal)
+Data %>% 
+  mutate(logresp = log(!!sym(resp))) %>%
+  as.data.frame() -> Data
+set.seed(123456)
+anovaBF(logresp ~ mutation * transfection + animal + slice + pair, 
+                 whichRandom = c("animal","slice","pair"), 
+                 whichModels = "withmain", 
+                 iterations = 20000,
+                 data = Data) %>%
+  bayesfactor_inclusion(match_models = TRUE) %>% 
+  as.data.frame() %>% 
+  na.omit() %>%    # removes the (nuisance) random factors
+  mutate(BF = exp(log_BF)) %>%
+  mutate_at("BF", formatC, format='g',digits = 3) %>% 
+  dplyr::select(BF) %>% 
+  unlist() -> aov$BF
+
+# Calculate intraclass correlation coefficients (ICC) for the random effects
+icc(model, by_group=TRUE, tolerance=0) %>% 
+  as.data.frame() %>% 
+  mutate(N = ngrps(model)) %>%
+  rbind(.,c("residual",1-sum(.$ICC),nobs(model))) %>%
+  mutate(ICC = as.numeric(ICC)) %>%                               
+  knitr::kable(caption = sprintf("**Intraclass correlation coefficients for random effects: %s**",resp), digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print()
+
+# Calculate orthogonal contrasts and append them to the ANOVA summary table
+# I go to the trouble of transforming the t-statistic (which is returned from the linear model) 
+# to an F statistic but they give identical p-values; I think this makes more sense and provides 
+# more consistency when splitting the source of variation into orthogonal contrasts and presenting 
+# them in an ANOVA table (eg. like with summary.aov or orthogonal contrasts in SAS)
+model_parameters(model, ci_method = "kenward", exponentiate = TRUE, effects = "fixed") %>%  
+  filter(grepl(":",Parameter)) %>%                          # select interaction terms only
+  rename(Source = Parameter) %>%                            # set denominator degrees of freedom
+  mutate(Df = 1) %>%                                        # set numerator degrees of freedom
+  add_column(BF = "")  %>%                                  # add empty column for Bayes factors
+  rename(Df.res = df_error) %>%                             # set denominator degrees of freedom
+  mutate(F = abs(t)^2) %>%                                  # calculate F statistic
+  mutate(`Pr(>F)` = pf(F,Df,Df.res,lower.tail=FALSE)) %>%   # calculate p value
+  dplyr::select(c(Source,F,Df,Df.res,`Pr(>F)`,BF)) %>%      # select columns of interest for table
+  rbind(aov,.) %>%                                          # row bind with anova table
+  mutate(`Pr(>F)` = afex::round_ps_apa(`Pr(>F)`)) %>%       # format p values as APA style
+  knitr::kable(caption = sprintf("**ANOVA table (Type III Wald F tests with Kenward-Roger df) and Bayes factors for fixed effects with interaction source split into orthogonal contrasts: %s**",resp), digits = 2) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  add_indent(c(4:5)) %>%                                    # add indentation to indicate source components
+  print()
+
+# 95% confidence intervals for interaction contrasts
+emm <- emmeans(model, ~ mutation * transfection, data = Data, tran = 'log', type = 'response')
+emm.interaction <- contrast(emm, method = "trt.vs.ctrl", interaction = TRUE, adjust = "none")
+emm.interaction %>%
+  confint() %>% 
+  relocate(df, .before = ratio) %>%
+  dplyr::select(-SE) %>%
+  knitr::kable(caption = sprintf("**95%% confidence intervals for contrasts: %s**",resp), digits = 2) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print()
+
+# Standardized effect sizes (*r*) for interaction contrasts
+# Methods used the same as this server: https://easystats4u.shinyapps.io/statistic2effectsize/
+emm.interaction %>% 
+    as.data.frame() %>% 
+    mutate(n = df+nrow(.)+1) %>% 
+    mutate(r = t_to_r(t.ratio, df)$r) %>% 
+    mutate(z = atanh(r),
+           SE = 1/sqrt(n-3),
+           CI = sprintf("[%.2f, %.2f]",
+                        LL = tanh(z - 1.96*SE),
+                        UL = tanh(z + 1.96*SE))) %>%
+    dplyr::select(-c(ratio,SE,df,null,t.ratio,p.value,z)) %>%
+    knitr::kable(col.names = c("mutation",
+                               "transfection",
+                               "*n*",
+                               "*r*",
+                               "95% *CI*"),
+                 caption = sprintf("**Standardized effect sizes (*r*) for contrasts: %s**",resp), digits = 2) %>% 
+    kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+    print()
+
+posthoc = TRUE
+
+if (posthoc == TRUE) {
+  
+# p-values and maximum Bayes Factors for interaction contrasts 
+# Dunnett step-down adjustment to control FWER on p-values (using multcomp package)
+# Chapter 4.1.2 in Bretz, F., Hothorn, T. and Westfall, P. (2011) Multiple Comparisons Using R. Taylor and Frances Group, LLC.
+emm.interaction %>%   
+    as.glht() %>%
+    summary(test = adjusted(type = "free")) -> glht.out  
+emm.interaction %>%   
+  as.data.frame() %>%
+  dplyr::select(-SE) %>%
+  mutate(p.adj = glht.out$test$pvalues) %>%
+  mutate(p.adj = sapply(p.adj,max,.Machine$double.eps)) %>%
+  mutate(maxBF = 1/pCalibrate(p.adj,"exploratory")) %>%
+  mutate_at("maxBF", formatC, format='g',digits = 3) %>%
+  mutate(p.value = afex::round_ps_apa(p.value)) %>%
+  mutate(p.adj = afex::round_ps_apa(p.adj)) %>%
+  knitr::kable(caption = sprintf("**Hypothesis testing on interaction parameters (Dunnett's step-down p-value adjustment): %s**",resp), digits = 2) %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print()
+
+}
+
+}
+
+```
+
+
