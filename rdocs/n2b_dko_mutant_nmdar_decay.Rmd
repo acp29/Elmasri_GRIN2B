@@ -94,14 +94,8 @@ settings <- lmerControl(check.conv.singular = .makeCC(action = "ignore",  tol = 
 
 **Fit a mixed linear model**
 ```{r, results='asis'}  
-
-# Initialize
-variates <- c("decay","dt50","fwhm")
-l <- length(variates)
-
-for (i in 1:l) {
   
-variates[i] -> resp  
+resp <- "decay"
 
 cat('\n\n\n# Analysis of',resp,'\n\n')
 
@@ -432,8 +426,6 @@ emm.interaction %>%
   knitr::kable(caption = sprintf("**Hypothesis testing on interaction parameters (Dunnett's step-down p-value adjustment): %s**",resp), digits = 2) %>%
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
   print()
-
-}
 
 }
 

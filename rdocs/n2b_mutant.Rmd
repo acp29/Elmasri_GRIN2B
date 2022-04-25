@@ -357,7 +357,7 @@ emm.interaction %>%
     kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
     print()
 
-posthoc = FALSE
+posthoc = TRUE
 
 if (posthoc == TRUE) {
   
