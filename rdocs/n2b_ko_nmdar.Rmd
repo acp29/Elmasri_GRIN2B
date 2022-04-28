@@ -241,7 +241,7 @@ anovaBF(logresp ~ genotype * transfection + animal + slice + pair,
 # to an F statistic but they give identical p-values; I think this makes more sense and provides 
 # more consistency when splitting the source of variation into polynomial contrasts and  
 # presenting them in an ANOVA table 
-model_parameters(model, ci_method = "kenward", exponentiate = FALSE, effects = "fixed") %>%  
+model_parameters(model, df_method = "kenward", exponentiate = FALSE, effects = "fixed") %>%  
   filter(grepl(":",Parameter)) %>%                          # select interaction terms only
   rename(Source = Parameter) %>%                            # set denominator degrees of freedom
   mutate(Df = 1) %>%                                        # set numerator degrees of freedom

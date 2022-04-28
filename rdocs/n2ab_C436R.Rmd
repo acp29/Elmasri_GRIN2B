@@ -79,7 +79,7 @@ Data$pair <- as.factor(Data$pair)
 
 **Set mutation WT and transfection - as reference levels**
 ```{r}
-Data$mutation <- factor(Data$mutation, levels=c("2B_C436R","2A_C436R"))
+Data$mutation <- factor(Data$mutation, levels=c("2A_C436R","2B_C436R"))
 Data$transfection <- factor(Data$transfection, levels=c("-","+"))
 ```
 
@@ -93,7 +93,7 @@ settings <- lmerControl(check.conv.singular = .makeCC(action = "ignore",  tol = 
 ```{r, results='asis'}  
 
 # Initialize
-variates <- c("peaknmda","decaynmda","dt50nmda","chargenmda","peakampa","decayampa","dt50ampa","chargeampa")
+variates <- c("peaknmda","decaynmda","dt50nmda","chargenmda")
 l <- length(variates)
 
 for (i in 1:l) {
@@ -131,7 +131,7 @@ p2 <- Data %>%
     mutate(ratio = `+`/`-`) %>%
     ggplot(aes(x=mutation, y=ratio, colour=mutation)) +
     geom_sina(alpha=0.9, shape = 16) + 
-    scale_color_manual(values=c("#D39200","#00C19F")) +
+    scale_color_manual(values=c("#00C19F","#D39200")) +
     stat_summary(fun.data="median_hilow", fun.args = list(conf.int=0.5), geom="linerange", color="black", size=1.0) + 
     stat_summary(fun="median", geom="point", shape=21, fill="white", color="black", size=2.5, stroke=1) +
     ylab("ratio") +
@@ -227,7 +227,7 @@ anovaBF(logresp ~ mutation * transfection + animal + slice + pair,
 # to an F statistic but they give identical p-values; I think this makes more sense and provides 
 # more consistency when splitting the source of variation into orthogonal contrasts and presenting 
 # them in an ANOVA table (eg. like with summary.aov or orthogonal contrasts in SAS)
-model_parameters(model, ci_method = "kenward", exponentiate = TRUE, effects = "fixed") %>%  
+model_parameters(model, df_method = "kenward", exponentiate = TRUE, effects = "fixed") %>%  
   filter(grepl(":",Parameter)) %>%                          # select interaction terms only
   rename(Source = Parameter) %>%                            # set denominator degrees of freedom
   mutate(Df = 1) %>%                                        # set numerator degrees of freedom
@@ -357,8 +357,8 @@ p2 <- Data %>%
     geom_crossbar(data = emm.transfection_df, 
                            aes(x=mutation, y=ratio, ymin=`lower.CL`, ymax=`upper.CL`, fill=mutation), 
                     color="black", alpha=0.5, size=0.5, fatten=1, width=0.8, inherit.aes=FALSE) +
-    scale_colour_manual(values=c("#D39200","#00C19F")) +
-    scale_fill_manual(values=c("#D39200","#00C19F")) +
+    scale_colour_manual(values=c("#00C19F","#D39200")) +
+    scale_fill_manual(values=c("#00C19F","#D39200")) +
     ylab("ratio") +
     theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1), axis.line = element_line(colour="black"),
           panel.grid.major = element_blank(),

@@ -94,6 +94,7 @@ settings <- lmerControl(check.conv.singular = .makeCC(action = "ignore",  tol = 
 
 # Initialize
 variates <- c("peaknmda","decaynmda","dt50nmda","chargenmda","peakampa","decayampa","dt50ampa","chargeampa")
+
 l <- length(variates)
 
 for (i in 1:l) {
@@ -266,7 +267,7 @@ anovaBF(logresp ~ mutation * transfection + animal + slice + pair,
 # to an F statistic but they give identical p-values; I think this makes more sense and provides 
 # more consistency when splitting the source of variation into orthogonal contrasts and presenting 
 # them in an ANOVA table (eg. like with summary.aov or orthogonal contrasts in SAS)
-model_parameters(model, ci_method = "kenward", exponentiate = TRUE, effects = "fixed") %>%  
+model_parameters(model, df_method = "kenward", exponentiate = TRUE, effects = "fixed") %>%  
   filter(grepl(":",Parameter)) %>%                          # select interaction terms only
   rename(Source = Parameter) %>%                            # set denominator degrees of freedom
   mutate(Df = 1) %>%                                        # set numerator degrees of freedom
@@ -357,7 +358,7 @@ emm.interaction %>%
     kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
     print()
 
-posthoc = TRUE
+posthoc = FALSE
 
 if (posthoc == TRUE) {
   
