@@ -243,7 +243,7 @@ anovaBF(logresp ~ genotype * transfection + animal + slice + pair,
 # presenting them in an ANOVA table 
 model_parameters(model, df_method = "kenward", exponentiate = FALSE, effects = "fixed") %>%  
   filter(grepl(":",Parameter)) %>%                          # select interaction terms only
-  rename(Source = Parameter) %>%                            # set denominator degrees of freedom
+  rename(Source = Parameter) %>%                            # 
   mutate(Df = 1) %>%                                        # set numerator degrees of freedom
   add_column(BF = "")  %>%                                  # add empty column for Bayes factors
   rename(Df.res = df_error) %>%                             # set denominator degrees of freedom

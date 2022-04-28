@@ -358,7 +358,7 @@ icc(model, by_group=TRUE, tolerance=0) %>%
 # them in an ANOVA table (eg. like with summary.aov or orthogonal contrasts in SAS)
 model_parameters(model, df_method = "kenward", exponentiate = TRUE, effects = "fixed") %>%  
   filter(grepl(":",Parameter)) %>%                          # select interaction terms only
-  rename(Source = Parameter) %>%                            # set denominator degrees of freedom
+  rename(Source = Parameter) %>%                            # 
   mutate(Df = 1) %>%                                        # set numerator degrees of freedom
   add_column(BF = "")  %>%                                  # add empty column for Bayes factors
   rename(Df.res = df_error) %>%                             # set denominator degrees of freedom
