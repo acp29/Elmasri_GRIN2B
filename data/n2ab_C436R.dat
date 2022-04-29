@@ -1,4 +1,4 @@
-#	mutation	transfection	pair	slice	hemi	animal	id	peaknmda	decaynmda	chargenmda	dt50nmda	fwhmnmda	peakampa	decayampa	chargeampa	riseampa	dt50ampa	fwhmampa
+#	subunit	transfection	pair	slice	hemi	animal	id	peaknmda	decaynmda	chargenmda	dt50nmda	fwhmnmda	peakampa	decayampa	chargeampa	riseampa	dt50ampa	fwhmampa
 1	2A_C436R	+	1	9	2	5	29-01-18 s0 p0	23.125	121.639	4.45951	55.8192	62.8709	8.7882	3.49674	0.21241	0.736735	2.99562	4.0455
 2	2A_C436R	-	1	9	2	5	29-01-18 s0 p0	51.395	46.7036	3.77103	31.3014	38.3624	15.99832	3.29629	0.476979	0.720634	2.70162	3.66091
 3	2A_C436R	+	2	9	2	5	29-01-18 s0 p1	32.4516	164.813	3.55955	57.3068	67.0074	10.2238	3.28792	0.258189	1.02761	1.34904	2.62535

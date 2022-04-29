@@ -61,8 +61,8 @@ library(effectsize)
 Data <- read.delim("../data/n2ab_C436R.dat", header = TRUE)
 # Implicit nesting (required for anovaBF)
 Data %>% 
-  mutate(mutation = as.factor(mutation)) %>% 
-  mutate(animal = paste0(as.numeric(mutation),animal)) %>% 
+  mutate(subunit = as.factor(subunit)) %>% 
+  mutate(animal = paste0(as.numeric(subunit),animal)) %>% 
   mutate(slice = paste0(animal,slice)) %>% 
   mutate(pair = paste0(slice,pair)) %>% 
   mutate(pair = factor(pair)) -> Data
@@ -70,16 +70,16 @@ Data %>%
 
 **Factor encoding**
 ```{r}  
-Data$mutation <- as.factor(Data$mutation)
+Data$subunit <- as.factor(Data$subunit)
 Data$transfection <- as.factor(Data$transfection)
 Data$animal <- as.factor(Data$animal)
 Data$slice <- as.factor(Data$slice)
 Data$pair <- as.factor(Data$pair)
 ```
 
-**Set mutation WT and transfection - as reference levels**
+**Set subunit 2A and transfection - as reference levels**
 ```{r}
-Data$mutation <- factor(Data$mutation, levels=c("2A_C436R","2B_C436R"))
+Data$subunit <- factor(Data$subunit, levels=c("2A_C436R","2B_C436R"))
 Data$transfection <- factor(Data$transfection, levels=c("-","+"))
 ```
 
@@ -107,16 +107,16 @@ cat('\n\n\n# Analysis of',resp,'\n\n')
 #  > library(scales)
 #  > show_col(hue_pal()(9))
 p1 <- Data %>%
-    mutate(mutation_jittered = jitter((as.numeric(mutation)+(as.numeric(transfection)-1)/2.5), 0.5),
-           grouping=interaction(pair, mutation)) %>%
-    mutate(mutation_transfection = as.numeric(mutation)+(as.numeric(transfection)-1)/2.5) %>%
-    ggplot(aes(x=mutation, y=!!sym(resp), group=grouping, color=transfection)) + 
+    mutate(subunit_jittered = jitter((as.numeric(subunit)+(as.numeric(transfection)-1)/2.5), 0.5),
+           grouping=interaction(pair, subunit)) %>%
+    mutate(subunit_transfection = as.numeric(subunit)+(as.numeric(transfection)-1)/2.5) %>%
+    ggplot(aes(x=subunit, y=!!sym(resp), group=grouping, color=transfection)) + 
     geom_blank() +
-    geom_line(aes(mutation_jittered), alpha=0.2, color="grey") +
-    geom_point(aes(mutation_jittered), alpha=0.4, shape=16) +
+    geom_line(aes(subunit_jittered), alpha=0.2, color="grey") +
+    geom_point(aes(subunit_jittered), alpha=0.4, shape=16) +
     scale_color_manual(values=c("grey","#00BA38")) +
-    stat_summary(mapping = aes(x=mutation_transfection,y=!!sym(resp)), fun.data="median_hilow", fun.args = list(conf.int=0.5), geom="linerange", color="black", size=1.0,inherit.aes=FALSE) + 
-    stat_summary(mapping = aes(x=mutation_transfection,y=!!sym(resp)), fun="median", geom="point", shape=21, fill="white", color="black", size=2.5, stroke=1, inherit.aes=FALSE) +
+    stat_summary(mapping = aes(x=subunit_transfection,y=!!sym(resp)), fun.data="median_hilow", fun.args = list(conf.int=0.5), geom="linerange", color="black", size=1.0,inherit.aes=FALSE) + 
+    stat_summary(mapping = aes(x=subunit_transfection,y=!!sym(resp)), fun="median", geom="point", shape=21, fill="white", color="black", size=2.5, stroke=1, inherit.aes=FALSE) +
     ylab(resp) +
     ggtitle("a") +
     theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1),axis.line = element_line(colour="black"),
@@ -127,9 +127,9 @@ p1 <- Data %>%
           legend.title = element_blank(),
           legend.position = "top")
 p2 <- Data %>% 
-    pivot_wider(c(mutation,pair,!!sym(resp)),names_from=transfection,values_from=!!sym(resp)) %>% 
+    pivot_wider(c(subunit,pair,!!sym(resp)),names_from=transfection,values_from=!!sym(resp)) %>% 
     mutate(ratio = `+`/`-`) %>%
-    ggplot(aes(x=mutation, y=ratio, colour=mutation)) +
+    ggplot(aes(x=subunit, y=ratio, colour=subunit)) +
     geom_sina(alpha=0.9, shape = 16) + 
     scale_color_manual(values=c("#00C19F","#D39200")) +
     stat_summary(fun.data="median_hilow", fun.args = list(conf.int=0.5), geom="linerange", color="black", size=1.0) + 
@@ -147,9 +147,9 @@ grid.arrange(p1, p2, nrow = 1, ncol = 2, top=sprintf("Summary plots of the data 
 # Fit the model and perform hypothesis testing
 
 # Fit model
-contrasts(Data$mutation) <- contr.sum
+contrasts(Data$subunit) <- contr.sum
 contrasts(Data$transfection) <- contr.sum
-formula <- sprintf("log(%s) ~ mutation * transfection + (1|animal/slice/pair)", resp)
+formula <- sprintf("log(%s) ~ subunit * transfection + (1|animal/slice/pair)", resp)
 model <- lme4::lmer(formula, data = Data, REML = TRUE, control = settings, na.action = "na.fail") 
 
 # Checking model assumptions
@@ -209,7 +209,7 @@ Data %>%
   mutate(logresp = log(!!sym(resp))) %>%
   as.data.frame() -> Data
 set.seed(123456)
-anovaBF(logresp ~ mutation * transfection + animal + slice + pair, 
+anovaBF(logresp ~ subunit * transfection + animal + slice + pair, 
                  whichRandom = c("animal","slice","pair"), 
                  whichModels = "withmain", 
                  iterations = 20000,
@@ -253,7 +253,7 @@ icc(model, by_group=TRUE, tolerance=0) %>%
   print()
 
 # Calculated estimated marginal means, By default, emmeans uses Kenward-Roger's method for estimating the degrees of freedom
-emm <- emmeans(model, ~ mutation * transfection, data = Data, tran = 'log', type = 'response')
+emm <- emmeans(model, ~ subunit * transfection, data = Data, tran = 'log', type = 'response')
 emm %>% 
   summary(calc = c(n = ".wgt.")) %>%
   as.data.frame() %>%
@@ -266,7 +266,7 @@ emm %>%
   print()
 
 # Calculate overall average for untransfected neurons
-emmeans(model, ~ mutation * transfection, data = Data) %>%
+emmeans(model, ~ subunit * transfection, data = Data) %>%
   as.data.frame() %>%
   filter(transfection == "-") %>%
   dplyr::select(emmean) %>% 
@@ -276,7 +276,7 @@ emmeans(model, ~ mutation * transfection, data = Data) %>%
   print()
 
 # Calculate transfected/untransfected ratios
-emm.transfection <- contrast(emm, method = "trt.vs.ctrl", interaction = FALSE, by = 'mutation', adjust = "none")
+emm.transfection <- contrast(emm, method = "trt.vs.ctrl", interaction = FALSE, by = 'subunit', adjust = "none")
 emm.transfection %>%
   confint() %>%
   as.data.frame() %>%
@@ -308,7 +308,7 @@ emm.interaction %>%
                         LL = tanh(z - 1.96*SE),
                         UL = tanh(z + 1.96*SE))) %>%
     dplyr::select(-c(ratio,SE,df,null,t.ratio,p.value,z)) %>%
-    knitr::kable(col.names = c("mutation",
+    knitr::kable(col.names = c("subunit",
                                "transfection",
                                "*n*",
                                "*r*",
@@ -322,19 +322,19 @@ emm.interaction %>%
 emf(sprintf("../img/%s_%s.emf","n2ab_C436R",resp), width=2.75, height=3.5)
 emm %>%
     as.data.frame() %>%
-    mutate(mutation_transfection = as.numeric(mutation)+(as.numeric(transfection)-1)/2.5) -> emm_df
+    mutate(subunit_transfection = as.numeric(subunit)+(as.numeric(transfection)-1)/2.5) -> emm_df
 p1 <- Data %>%
-    mutate(mutation_jittered = jitter((as.numeric(mutation)+(as.numeric(transfection)-1)/2.5), 0.5),
-           grouping=interaction(pair, mutation)) %>%
-    mutate(mutation_transfection = as.numeric(mutation)+(as.numeric(transfection)-1)/2.5) %>%
-    ggplot(aes(x=mutation, y=!!sym(resp), group=grouping, color=transfection)) + 
+    mutate(subunit_jittered = jitter((as.numeric(subunit)+(as.numeric(transfection)-1)/2.5), 0.5),
+           grouping=interaction(pair, subunit)) %>%
+    mutate(subunit_transfection = as.numeric(subunit)+(as.numeric(transfection)-1)/2.5) %>%
+    ggplot(aes(x=subunit, y=!!sym(resp), group=grouping, color=transfection)) + 
     geom_blank() +
-    geom_line(aes(mutation_jittered), alpha=0.3, color="grey", size=0.75) +
-    geom_point(aes(mutation_jittered), alpha=0.6, shape = 16, size=1.25) +
+    geom_line(aes(subunit_jittered), alpha=0.3, color="grey", size=0.75) +
+    geom_point(aes(subunit_jittered), alpha=0.6, shape = 16, size=1.25) +
     scale_color_manual(values=c("grey","#00BA38")) +
     scale_fill_manual(values=c("grey","#00BA38")) +
     geom_crossbar(data = emm_df, 
-                    aes(x=mutation_transfection, y=response, ymin=`lower.CL`, ymax=`upper.CL`, fill=transfection), 
+                    aes(x=subunit_transfection, y=response, ymin=`lower.CL`, ymax=`upper.CL`, fill=transfection), 
                     color="black", alpha=0.5, size=0.5, fatten=1, width=0.3, inherit.aes=FALSE) + 
     ylab(resp) +
     theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1),axis.line = element_line(colour="black"),
@@ -350,12 +350,12 @@ emm.transfection %>%
     confint() %>%
     as.data.frame() -> emm.transfection_df
 p2 <- Data %>% 
-    pivot_wider(c(mutation,pair,!!sym(resp)),names_from=transfection,values_from=!!sym(resp)) %>% 
+    pivot_wider(c(subunit,pair,!!sym(resp)),names_from=transfection,values_from=!!sym(resp)) %>% 
     mutate(ratio = `+`/`-`) %>%
-    ggplot(aes(x=mutation, y=ratio, colour=mutation)) +
+    ggplot(aes(x=subunit, y=ratio, colour=subunit)) +
     geom_sina(alpha=0.6, shape=16, size=1.25, maxwidth=0.5) + 
     geom_crossbar(data = emm.transfection_df, 
-                           aes(x=mutation, y=ratio, ymin=`lower.CL`, ymax=`upper.CL`, fill=mutation), 
+                           aes(x=subunit, y=ratio, ymin=`lower.CL`, ymax=`upper.CL`, fill=subunit), 
                     color="black", alpha=0.5, size=0.5, fatten=1, width=0.8, inherit.aes=FALSE) +
     scale_colour_manual(values=c("#00C19F","#D39200")) +
     scale_fill_manual(values=c("#00C19F","#D39200")) +
