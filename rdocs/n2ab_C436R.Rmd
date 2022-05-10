@@ -59,7 +59,7 @@ library(effectsize)
 **Read text in from file**
 ```{r}
 Data <- read.delim("../data/n2ab_C436R.dat", header = TRUE)
-# Implicit nesting (required for anovaBF)
+# Explicit nesting (required for anovaBF)
 Data %>% 
   mutate(subunit = as.factor(subunit)) %>% 
   mutate(animal = paste0(as.numeric(subunit),animal)) %>% 

@@ -59,7 +59,7 @@ library(effectsize)
 **Read text in from file**
 ```{r}
 allData <- read.delim("../data/n2b_dko_mutant_nmdar.dat", header = TRUE)
-# Implicit nesting (required for anovaBF)
+# Explicit nesting (required for anovaBF)
 allData %>% 
   mutate(mutation = as.factor(mutation)) %>% 
   mutate(animal = paste0(as.numeric(mutation),animal)) %>% 
