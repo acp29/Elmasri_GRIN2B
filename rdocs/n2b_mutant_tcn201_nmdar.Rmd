@@ -58,14 +58,23 @@ library(effectsize)
 
 **Read text in from file**
 ```{r}
-Data <- read.delim("../data/n2b_mutant_tcn201.dat", header = TRUE)
+allData <- read.delim("../data/n2b_mutant_tcn201.dat", header = TRUE)
 # Explicit nesting (required for anovaBF)
+allData %>% 
+  na.omit() %>%
+  mutate(mutation = as.factor(mutation)) %>% 
+  mutate(animal = paste0(as.numeric(mutation),animal)) %>% 
+  mutate(slice = paste0(animal,slice)) %>% 
+  mutate(pair = paste0(slice,cell)) %>% 
+  mutate(pair = factor(cell)) -> Data
 ```
 
 **Factor encoding**
 ```{r}  
 Data$mutation <- as.factor(Data$mutation)
 Data$drug <- as.factor(Data$drug)
+Data$animal <- as.factor(Data$animal)
+Data$slice <- as.factor(Data$slice)
 Data$cell <- as.factor(Data$cell)
 ```
 
@@ -169,7 +178,7 @@ attr(Data$drug,"contrasts") %>%
   knitr::kable(caption = sprintf("**Matrix of contrasts on drug: %s**",resp), digits = 2) %>% 
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
   print() 
-formula <- sprintf("log(%s) ~ mutation * drug + (1|cell)", resp)
+formula <- sprintf("log(%s) ~ mutation * drug + (1|animal/slice/cell)", resp)
 model <- lmer(formula, data = Data, REML = TRUE, control = settings, na.action = "na.fail") 
 
 # Checking model assumptions
@@ -197,11 +206,11 @@ p3 <- ggplot(Data, aes(sample = std_resid)) +
   stat_qq_line(color="#F8766D",size=1) +
   ggtitle("c") +
   xlab("Normal Quantiles") + ylab("Sample Quantiles") 
-infl <- hlm_influence(model, level="cell")
+infl <- hlm_influence(model, level="cell:(slice:animal)")
 p4 <- infl %>% 
   mutate(influential = cooksd > 1.0) %>% 
-  ggplot(aes(x=`cell`,y=cooksd, color=influential)) + 
-  geom_segment(aes(x=`cell`, xend=`cell`, y=0, yend=cooksd)) + 
+  ggplot(aes(x=`cell:(slice:animal)`,y=cooksd, color=influential)) + 
+  geom_segment(aes(x=`cell:(slice:animal)`, xend=`cell:(slice:animal)`, y=0, yend=cooksd)) + 
   geom_point() + 
   scale_color_manual(values=c("#619CFF","#F8766D")) + 
   ylab("Cook's distance") +
@@ -313,8 +322,8 @@ Data %>%
   mutate(logresp = log(!!sym(resp))) %>%
   as.data.frame() -> Data
 set.seed(123456)
-anovaBF(logresp ~ mutation * drug + cell, 
-                 whichRandom = "cell", 
+anovaBF(logresp ~ mutation * drug + animal + slice + cell, 
+                 whichRandom = c("animal","slice","cell"), 
                  whichModels = "withmain", 
                  iterations = 20000,
                  data = Data) %>%
@@ -357,6 +366,16 @@ model_parameters(model, df_method = "kenward", exponentiate = TRUE, effects = "f
   add_indent(c(4:5)) %>%                                    # add indentation to indicate source components
   print()
 
+# Display table of after/before ratios and their confidence intervals
+emm.drug %>%
+  confint() %>%
+  as.data.frame() %>%
+  relocate(df, .before = ratio) %>%
+  dplyr::select(-SE) %>%
+  knitr::kable(caption = sprintf("**Estimated marginal means with 95%% confidence intervals for transfected/untransfected ratios: %s**",resp), digits = 2) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  print()
+
 # 95% confidence intervals for interaction contrasts
 emm <- emmeans(model, ~ mutation * drug, data = Data, tran = 'log', type = 'response')
 emm.interaction <- contrast(emm, method = "trt.vs.ctrl", interaction = TRUE, adjust = "none")
@@ -396,9 +415,10 @@ if (posthoc == TRUE) {
 # p-values and maximum Bayes Factors for interaction contrasts 
 # Dunnett step-down adjustment to control FWER on p-values (using multcomp package)
 # Chapter 4.1.2 in Bretz, F., Hothorn, T. and Westfall, P. (2011) Multiple Comparisons Using R. Taylor and Frances Group, LLC.
+emm.interaction <- contrast(emm, method = "pairwise", interaction = TRUE, adjust = "none")
 emm.interaction %>%   
     as.glht() %>%
-    summary(test = adjusted(type = "free")) -> glht.out  
+    summary(test = adjusted(type = "Westfall")) -> glht.out  
 emm.interaction %>%   
   as.data.frame() %>%
   dplyr::select(-SE) %>%
@@ -408,7 +428,7 @@ emm.interaction %>%
   mutate_at("maxBF", formatC, format='g',digits = 3) %>%
   mutate(p.value = afex::round_ps_apa(p.value)) %>%
   mutate(p.adj = afex::round_ps_apa(p.adj)) %>%
-  knitr::kable(caption = sprintf("**Hypothesis testing on interaction parameters (Dunnett's step-down p-value adjustment): %s**",resp), digits = 2) %>%
+  knitr::kable(caption = sprintf("**Hypothesis testing on interaction parameters (Westfall's step-wise p-value adjustment): %s**",resp), digits = 2) %>%
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
   print()
 
