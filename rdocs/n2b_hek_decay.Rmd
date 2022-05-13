@@ -101,7 +101,7 @@ emm <- emmeans(model, ~ receptor, tran = 'log10', type = 'response')
 emm %>% 
   as.data.frame() %>%
   dplyr::select(-SE) %>%
-  knitr::kable(caption = sprintf("**Standardized effect sizes (Cohen's *d*) with marginal 95%% confidence intervals: %s**",resp), digits = 2) %>% 
+  knitr::kable(caption = sprintf("**Response ratios with marginal 95%% confidence intervals: %s**",resp), digits = 2) %>% 
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
   print()
 
@@ -110,7 +110,7 @@ emm <- emmeans(model, ~ receptor)
 emm %>% 
   as.data.frame() %>%
   dplyr::select(-SE) %>%
-  knitr::kable(caption = sprintf("**Standardized effect sizes (Cohen's *d*) with marginal 95%% confidence intervals: %s**",resp), digits = 2) %>% 
+  knitr::kable(caption = sprintf("**Response ratios with marginal 95%% confidence intervals: log10(%s)**",resp), digits = 2) %>% 
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
   print()
 
