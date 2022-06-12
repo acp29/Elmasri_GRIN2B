@@ -77,6 +77,14 @@ Data$slice <- as.factor(Data$slice)
 Data$pair <- as.factor(Data$pair)
 ```
 
+**test**
+```{r}
+# Calculate AMPA/NMDA ratios
+Data %>%
+  mutate(AMPA_NMDA_ratio = peakampa/peaknmda) -> Data
+```
+
+
 **Set mutation WT and transfection - as reference levels**
 ```{r}
 Data$mutation <- factor(Data$mutation, levels=c("WT","R540H","R696H","C456Y","C461F"))
@@ -93,7 +101,7 @@ settings <- lmerControl(check.conv.singular = .makeCC(action = "ignore",  tol = 
 ```{r, results='asis'}  
 
 # Initialize
-variates <- c("peaknmda","decaynmda","dt50nmda","chargenmda","peakampa","decayampa","dt50ampa","chargeampa")
+variates <- c("peaknmda","decaynmda","dt50nmda","chargenmda","peakampa","decayampa","dt50ampa","chargeampa","AMPA_NMDA_ratio")
 
 l <- length(variates)
 

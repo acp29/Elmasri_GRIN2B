@@ -62,11 +62,10 @@ allData <- read.delim("../data/n2b_mutant_tcn201.dat", header = TRUE)
 # Explicit nesting (required for anovaBF)
 allData %>% 
   na.omit() %>%
-  mutate(mutation = as.factor(mutation)) %>% 
+  mutate(mutation = as.factor(mutation)) %>%
   mutate(animal = paste0(as.numeric(mutation),animal)) %>% 
   mutate(slice = paste0(animal,slice)) %>% 
-  mutate(pair = paste0(slice,cell)) %>% 
-  mutate(pair = factor(cell)) -> Data
+  mutate(cell = paste0(slice,cell))  -> Data
 ```
 
 **Factor encoding**
@@ -93,7 +92,14 @@ settings <- lmerControl(check.conv.singular = .makeCC(action = "ignore",  tol = 
 **Fit a mixed linear model**
 ```{r, results='asis'}  
   
-"peak" -> resp  
+# Initialize
+variates <- c("peaknmda","decaynmda")
+
+l <- length(variates)
+
+for (i in 1:l) {
+  
+variates[i] -> resp  
 
 cat('\n\n\n# Analysis of',resp,'\n\n')
 
@@ -267,15 +273,12 @@ p1 <- Data %>%
     mutate(mutation_jittered = jitter((as.numeric(mutation)+(as.numeric(drug)-1)/2.5), 0.5),
            grouping=interaction(cell, mutation)) %>%
     mutate(mutation_drug = as.numeric(mutation)+(as.numeric(drug)-1)/2.5) %>%
-    ggplot(aes(x=mutation, y=!!sym(resp), group=grouping, color=drug)) + 
+    ggplot(aes(x=mutation, y=!!sym(resp), group=grouping, color=as.factor(mutation_drug))) + 
     geom_blank() +
-    geom_line(aes(mutation_jittered), alpha=0.3, color="grey", size=0.75) +
-    geom_point(aes(mutation_jittered), alpha=0.6, shape = 16, size=1.25) +
-    scale_color_manual(values=c("grey","#00BA38")) +
-    scale_fill_manual(values=c("grey","#00BA38")) +
-    geom_crossbar(data = emm_df, 
-                    aes(x=mutation_drug, y=response, ymin=`lower.CL`, ymax=`upper.CL`, fill=drug), 
-                    color="black", alpha=0.5, size=0.5, fatten=1, width=0.3, inherit.aes=FALSE) + 
+    geom_line(aes(mutation_jittered), alpha=0.4, color="grey", size=0.66) +
+    geom_point(aes(mutation_jittered), alpha=0.8, shape = 16, size=1.5) +
+    scale_color_manual(values=c("grey","#7F7F7F","#FFB3E2","#FF60C3","#B2CDFF","#75AAFF")) +
+    scale_fill_manual(values=c("grey","#7F7F7F","#FFB3E2","#FF60C3","#B2CDFF","#75AAFF")) +
     ylab(resp) +
     theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1),axis.line = element_line(colour="black"),
           panel.grid.major = element_blank(),
@@ -283,7 +286,7 @@ p1 <- Data %>%
           panel.border = element_blank(),
           panel.background = element_blank(),
           legend.title = element_blank(),
-          legend.position = c(0.5, 1.06),
+          legend.position = "none",
           legend.direction = "horizontal",
           text = element_text(size=14))
 emm.drug %>%
@@ -293,7 +296,7 @@ p2 <- Data %>%
     pivot_wider(c(mutation,cell,!!sym(resp)),names_from=drug,values_from=!!sym(resp)) %>% 
     mutate(ratio = `after`/`before`) %>%
     ggplot(aes(x=mutation, y=ratio, colour=mutation)) +
-    geom_sina(alpha=0.6, shape=16, size=1.25, maxwidth=0.5) + 
+    geom_sina(alpha=0.6, shape=16, size=1.5, maxwidth=0.5) + 
     geom_crossbar(data = emm.drug_df, 
                            aes(x=mutation, y=ratio, ymin=`lower.CL`, ymax=`upper.CL`, fill=mutation), 
                     color="black", alpha=0.5, size=0.5, fatten=1, width=0.8, inherit.aes=FALSE) +
@@ -434,6 +437,7 @@ emm.interaction %>%
 
 }
 
+}
 
 ```
 
