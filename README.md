@@ -1,7 +1,7 @@
 # Elmasri_GRIN2B
 Data and code for:
 
-Elmasri M., Lotti J.S., Aziz W., Steele O.G., Karachaliou E., Sakimura, K., Hansen, K.B. and Penn, A.C. Synaptic Dysfunction by Mutations in GRIN2B: Influence of Triheteromeric NMDA Receptors on Gain-of-Function and Loss-of-Function Mutant Classification. Brain Sci. 12:789 https://doi.org/10.3390/brainsci12060789
+Elmasri M., Lotti J.S., Aziz W., Steele O.G., Karachaliou E., Sakimura, K., Hansen, K.B. and Penn, A.C. (2022) Synaptic Dysfunction by Mutations in GRIN2B: Influence of Triheteromeric NMDA Receptors on Gain-of-Function and Loss-of-Function Mutant Classification. Brain Sci. 12:789 https://doi.org/10.3390/brainsci12060789
 
 ## Table of contents
 
