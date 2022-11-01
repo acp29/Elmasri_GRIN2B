@@ -1,77 +1,77 @@
-mutation	cell	slice	animal	drug	peaknmda	decaynmda
-WT	1	1	1	before	146.9	36.2
-WT	2	2	1	before	274.1	74.6
-WT	3	2	1	before	82.3	49.7
-WT	4	3	1	before	161.4	113.1
-WT	5	3	1	before	297.6	100.6
-WT	6	4	1	before	96.9	133.3
-WT	7	6	1	before	93.5	35.3
-WT	8	6	1	before	152.6	58.2
-WT	9	7	1	before	114.4	65.2
-WT	10	8	1	before	141.0	39.7
-C456Y	11	9	2	before	170.9	19.7
-C456Y	12	10	2	before	130.0	39.2
-C456Y	13	10	2	before	137.6	19.2
-C456Y	14	11	2	before	68.2	29.4
-C456Y	15	11	2	before	225.7	22.7
-C456Y	16	12	2	before	31.0	21.9
-C456Y	17	12	2	before	108.5	26.5
-C456Y	18	13	3	before	102.7	32.4
-C456Y	19	14	3	before	75.0	18.9
-C456Y	20	14	3	before	63.7	21.6
-C456Y	21	15	3	before	127.4	25.2
-C456Y	22	15	3	before	132.2	23.6
-C456Y	23	16	3	before	213.7	18.9
-C456Y	24	17	3	before	57.1	31.1
-C456Y	25	17	3	before	43.1	21.6
-R696H	26	18	4	before	77.9	37.5
-R696H	27	19	4	before	125.4	54.7
-R696H	28	19	4	before	98.0	45.8
-R696H	29	20	4	before	350.7	56.7
-R696H	30	21	4	before	194.4	51.1
-R696H	31	22	4	before	179.7	32.8
-R696H	32	23	4	before	139.4	33.5
-R696H	33	24	5	before	151.5	104.1
-R696H	34	25	5	before	151.1	37.1
-R696H	35	25	5	before	154.7	33.6
-R696H	36	26	5	before	138.7	27.3
-R696H	37	26	5	before	65.9	92.9
-R696H	38	27	5	before	85.7	204.2
-WT	1	1	1	after	38.1	44.2
-WT	2	2	1	after	154.5	91.8
-WT	3	2	1	after	41.6	66.9
-WT	4	3	1	after	103.8	149.9
-WT	5	3	1	after	145.2	79.5
-WT	6	4	1	after	78.8	127.8
-WT	7	6	1	after	58.9	42.6
-WT	8	6	1	after	81.0	85.5
-WT	9	7	1	after	111.0	59.3
-WT	10	8	1	after	121.4	48.6
-C456Y	11	9	2	after	104.0	16.1
-C456Y	12	10	2	after	45.0	20.5
-C456Y	13	10	2	after	38.7	23.5
-C456Y	14	11	2	after	34.2	40.9
-C456Y	15	11	2	after	116.0	23.2
-C456Y	16	12	2	after	37.3	22.5
-C456Y	17	12	2	after	27.5	36.8
-C456Y	18	13	3	after	21.1	48.4
-C456Y	19	14	3	after	30.1	23.4
-C456Y	20	14	3	after	12.1	20.5
-C456Y	21	15	3	after	27.4	33.8
-C456Y	22	15	3	after	44.9	21.1
-C456Y	23	16	3	after	42.5	15.3
-C456Y	24	17	3	after	23.2	25.3
-C456Y	25	17	3	after	23.2	31.7
-R696H	26	18	4	after	39.5	32.5
-R696H	27	19	4	after	60.5	92.7
-R696H	28	19	4	after	46.0	85.1
-R696H	29	20	4	after	51.7	67.8
-R696H	30	21	4	after	99.4	113.1
-R696H	31	22	4	after	36.9	38.9
-R696H	32	23	4	after	52.3	39.9
-R696H	33	24	5	after	74.9	73.2
-R696H	34	25	5	after	31.6	70.5
-R696H	35	25	5	after	58.7	32.0
-R696H	36	26	5	after	45.6	30.1
-R696H	37	26	5	after	25.2	44.2
-R696H	38	27	5	after	70.1	121.1
+mutation	cell	drug	nmdapeak	nmdadecay
+WT	1	before	146.9	36.2
+WT	2	before	274.1	74.6
+WT	3	before	82.3	49.7
+WT	4	before	161.4	113.1
+WT	5	before	297.6	100.6
+WT	6	before	96.9	133.3
+WT	7	before	93.5	35.3
+WT	8	before	152.6	58.2
+WT	9	before	114.4	65.2
+WT	10	before	141.0	39.7
+C456Y	11	before	170.9	19.7
+C456Y	12	before	130.0	39.2
+C456Y	13	before	137.6	19.2
+C456Y	14	before	68.2	29.4
+C456Y	15	before	225.7	22.7
+C456Y	16	before	31.0	21.9
+C456Y	17	before	108.5	26.5
+C456Y	18	before	102.7	32.4
+C456Y	19	before	75.0	18.9
+C456Y	20	before	63.7	21.6
+C456Y	21	before	127.4	25.2
+C456Y	22	before	132.2	23.6
+C456Y	23	before	213.7	18.9
+C456Y	24	before	57.1	31.1
+C456Y	25	before	43.1	21.6
+R696H	26	before	77.9	37.5
+R696H	27	before	125.4	54.7
+R696H	28	before	98.0	45.8
+R696H	29	before	350.7	56.7
+R696H	30	before	194.4	51.1
+R696H	31	before	179.7	32.8
+R696H	32	before	139.4	33.5
+R696H	33	before	151.5	104.1
+R696H	34	before	151.1	37.1
+R696H	35	before	154.7	33.6
+R696H	36	before	138.7	27.3
+R696H	37	before	65.9	92.9
+R696H	38	before	85.7	204.2
+WT	1	after	38.1	44.2
+WT	2	after	154.5	91.8
+WT	3	after	41.6	66.9
+WT	4	after	103.8	149.9
+WT	5	after	145.2	79.5
+WT	6	after	78.8	127.8
+WT	7	after	58.9	42.6
+WT	8	after	81.0	85.5
+WT	9	after	111.0	59.3
+WT	10	after	121.4	48.6
+C456Y	11	after	104.0	16.1
+C456Y	12	after	45.0	20.5
+C456Y	13	after	38.7	23.5
+C456Y	14	after	34.2	40.9
+C456Y	15	after	116.0	23.2
+C456Y	16	after	37.3	22.5
+C456Y	17	after	27.5	36.8
+C456Y	18	after	21.1	48.4
+C456Y	19	after	30.1	23.4
+C456Y	20	after	12.1	20.5
+C456Y	21	after	27.4	33.8
+C456Y	22	after	44.9	21.1
+C456Y	23	after	42.5	15.3
+C456Y	24	after	23.2	25.3
+C456Y	25	after	23.2	31.7
+R696H	26	after	39.5	32.5
+R696H	27	after	60.5	92.7
+R696H	28	after	46.0	85.1
+R696H	29	after	51.7	67.8
+R696H	30	after	99.4	113.1
+R696H	31	after	36.9	38.9
+R696H	32	after	52.3	39.9
+R696H	33	after	74.9	73.2
+R696H	34	after	31.6	70.5
+R696H	35	after	58.7	32.0
+R696H	36	after	45.6	30.1
+R696H	37	after	25.2	44.2
+R696H	38	after	70.1	121.1
